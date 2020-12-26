@@ -6,39 +6,17 @@ using System.Threading.Tasks;
 
 namespace GameCharadesServer.Services
 {
-    public class GameService : IGameService
+    public class LobbiesService : ILobbiesService
     {
         public List<Lobby> Lobbies { get; set; }
-        public List<Player> Players { get; set; }
 
-        public GameService()
+        private IPlayersService playersService;
+
+        public LobbiesService(IPlayersService playersService)
         {
+            this.playersService = playersService;
+
             Lobbies = new List<Lobby>();
-            Players = new List<Player>();
-        }
-
-        public void AddMessage(Message message, string lobbyId)
-        {
-            var lobby = Lobbies.Find(l => l.Id.Equals(lobbyId));
-            lobby.Messages.Add(message);
-        }
-
-        public ICollection<Message> GetMessages(string lobbyId)
-        {
-            var lobby = Lobbies.Find(l => l.Id.Equals(lobbyId));
-            return lobby.Messages;
-        }
-
-        public void AddSegmentPoint(Point point, string lobbyId)
-        {
-            var lobby = Lobbies.Find(l => l.Id.Equals(lobbyId));
-
-            if (point.IsFirstPointInSegment)
-            {
-                lobby.LineSegments.Add(new LineSegment());
-            }
-
-            lobby.LineSegments[lobby.LineSegments.Count - 1].Points.Add(point);
         }
 
         public Lobby AddLobby(string lobbyName)
@@ -76,34 +54,6 @@ namespace GameCharadesServer.Services
             return Lobbies.SingleOrDefault(l => l.Id.Equals(lobbyId));
         }
 
-        public Player CreatePlayer(string playerName, string connectionId)
-        {
-            var player = new Player()
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = playerName,
-                ConnectionId = connectionId
-            };
-
-            Players.Add(player);
-
-            return player;
-        }
-
-        public bool RemovePlayer(string connectionId)
-        {
-            var player = Players.Find(p => p.ConnectionId.Equals(connectionId));
-
-            if (player == null)
-            {
-                return false;
-            }
-
-            Players.Remove(player);
-
-            return true;
-        }
-
         public Lobby GetPlayerLobby(string playerConnectionId)
         {
             var lobby = Lobbies.Find(l => l.Players.Find(p => p.ConnectionId.Equals(playerConnectionId)) != null);
@@ -113,7 +63,7 @@ namespace GameCharadesServer.Services
 
         public Player AddPlayerToLobby(string lobbyId, string playerConnectionId)
         {
-            var player = Players.Find(p => p.ConnectionId.Equals(playerConnectionId));
+            var player = playersService.GetPlayerByConnectionId(playerConnectionId);
             var lobby = this.Lobbies.Find(l => l.Id.Equals(lobbyId));
 
             if (player == null || lobby == null)
@@ -127,7 +77,7 @@ namespace GameCharadesServer.Services
         public Player RemovePlayerFromLobby(string lobbyId, string playerConnectionId)
         {
             var lobby = Lobbies.Find(l => l.Id.Equals(lobbyId));
-            var player = Players.Find(p => p.ConnectionId.Equals(playerConnectionId));
+            var player = playersService.GetPlayerByConnectionId(playerConnectionId);
 
             if (lobby == null || player == null)
                 return null;

@@ -36,7 +36,10 @@ namespace GameCharadesServer
                        .WithOrigins("http://localhost:4200");
             }));
             services.AddSignalR();
+
             services.AddSingleton<IGameService, GameService>();
+            services.AddSingleton<ILobbiesService, LobbiesService>();
+            services.AddSingleton<IPlayersService, PlayersService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

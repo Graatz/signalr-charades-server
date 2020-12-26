@@ -13,22 +13,27 @@ namespace GameCharadesServer.Hubs
     public class GameHub : Hub
     {
         private IGameService gameService;
-        public GameHub(IGameService gameService)
+        private IPlayersService playersService;
+        private ILobbiesService lobbiesService;
+
+        public GameHub(IGameService gameService, IPlayersService playersService, ILobbiesService lobbiesService)
         {
             this.gameService = gameService;
+            this.playersService = playersService;
+            this.lobbiesService = lobbiesService;
         }
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            var lobby = gameService.GetPlayerLobby(Context.ConnectionId);
+            var lobby = lobbiesService.GetPlayerLobby(Context.ConnectionId);
 
             // Remove player from lobby if he joined any
             if (lobby != null)
             {
-                var player = gameService.RemovePlayerFromLobby(lobby.Id, Context.ConnectionId);
+                var player = lobbiesService.RemovePlayerFromLobby(lobby.Id, Context.ConnectionId);
 
                 if (lobby.Players.Count == 0)
                 {
-                    gameService.RemoveLobby(lobby.Id);
+                    lobbiesService.RemoveLobby(lobby.Id);
                     var lobbyDto = Mapper.MapLobbyToLobbyDto(lobby);
                     Clients.All.SendAsync("LobbyRemoved", lobbyDto);
                 }
@@ -40,7 +45,7 @@ namespace GameCharadesServer.Hubs
             }
 
             // Remove player
-            gameService.RemovePlayer(Context.ConnectionId);
+            playersService.RemovePlayer(Context.ConnectionId);
 
             return base.OnDisconnectedAsync(exception);
         }
@@ -48,7 +53,7 @@ namespace GameCharadesServer.Hubs
         #region Players
         public async Task CreatePlayer(string playerName)
         {
-            var player = gameService.CreatePlayer(playerName, Context.ConnectionId);
+            var player = playersService.CreatePlayer(playerName, Context.ConnectionId);
             await Clients.Caller.SendAsync("PlayerCreated", player);
         }
         #endregion
@@ -56,7 +61,7 @@ namespace GameCharadesServer.Hubs
         #region Lobbies
         public async Task GetLobbies()
         {
-            var lobbies = gameService.GetLobbies();
+            var lobbies = lobbiesService.GetLobbies();
             var lobbyDtos = new List<LobbyDto>();
 
             foreach (var lobby in lobbies)
@@ -69,8 +74,8 @@ namespace GameCharadesServer.Hubs
 
         public async Task NewLobby(string lobbyName)
         {
-            var lobby = gameService.AddLobby(lobbyName);
-            var player = gameService.AddPlayerToLobby(lobby.Id, Context.ConnectionId);
+            var lobby = lobbiesService.AddLobby(lobbyName);
+            var player = lobbiesService.AddPlayerToLobby(lobby.Id, Context.ConnectionId);
             await Groups.AddToGroupAsync(Context.ConnectionId, lobbyName);
 
             var lobbyDto = Mapper.MapLobbyToLobbyDto(lobby);
@@ -80,9 +85,9 @@ namespace GameCharadesServer.Hubs
 
         public async Task JoinLobby(string lobbyId)
         {
-            var lobbyName = gameService.GetLobbyName(lobbyId);
-            var player = gameService.AddPlayerToLobby(lobbyId, Context.ConnectionId);
-            var lobby = gameService.GetPlayerLobby(Context.ConnectionId);
+            var lobbyName = lobbiesService.GetLobbyName(lobbyId);
+            var player = lobbiesService.AddPlayerToLobby(lobbyId, Context.ConnectionId);
+            var lobby = lobbiesService.GetPlayerLobby(Context.ConnectionId);
 
             await Clients.Group(lobbyName).SendAsync("PlayerJoinedLobby", player);
 
@@ -94,21 +99,21 @@ namespace GameCharadesServer.Hubs
 
         public async Task LeaveLobby(string lobbyId)
         {
-            var lobby = gameService.GetLobby(lobbyId);
+            var lobby = lobbiesService.GetLobby(lobbyId);
 
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, lobby.Name);
-            var player = gameService.RemovePlayerFromLobby(lobbyId, Context.ConnectionId);
+            var player = lobbiesService.RemovePlayerFromLobby(lobbyId, Context.ConnectionId);
 
             if (lobby.Players.Count == 0)
             {
-                gameService.RemoveLobby(lobby.Id);
+                lobbiesService.RemoveLobby(lobby.Id);
 
                 var lobbyDto = Mapper.MapLobbyToLobbyDto(lobby);
                 await Clients.All.SendAsync("LobbyRemoved", lobbyDto);
             }
             else
             {
-                await Clients.Group(gameService.GetLobbyName(lobbyId)).SendAsync("PlayerLeftLobby", player);
+                await Clients.Group(lobbiesService.GetLobbyName(lobbyId)).SendAsync("PlayerLeftLobby", player);
             }
 
             await Clients.Caller.SendAsync("CurrentPlayerLeftLobby");
@@ -119,7 +124,7 @@ namespace GameCharadesServer.Hubs
         public async Task NewMessage(Message msg, string lobbyId)
         {
             this.gameService.AddMessage(msg, lobbyId);
-            await Clients.Group(gameService.GetLobbyName(lobbyId)).SendAsync("MessageReceived", msg);   
+            await Clients.Group(lobbiesService.GetLobbyName(lobbyId)).SendAsync("MessageReceived", msg);   
         }
         #endregion
  
@@ -139,7 +144,7 @@ namespace GameCharadesServer.Hubs
         public async Task NewSegmentPoint(Point point, string lobbyId)
         {
             gameService.AddSegmentPoint(point, lobbyId);
-            await Clients.Group(gameService.GetLobbyName(lobbyId)).SendAsync("SegmentPointReceived", point);
+            await Clients.Group(lobbiesService.GetLobbyName(lobbyId)).SendAsync("SegmentPointReceived", point);
         }
         #endregion
     }
