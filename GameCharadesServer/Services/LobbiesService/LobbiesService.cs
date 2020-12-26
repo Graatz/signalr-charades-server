@@ -87,24 +87,6 @@ namespace GameCharadesServer.Services
             return player;
         }
 
-        public Lobby StartGame(string lobbyId)
-        {
-            var lobby = Lobbies.Find(l => l.Id.Equals(lobbyId));
-            lobby.InGame = true;
-            lobby.LineSegments = new List<LineSegment>();
-
-            return lobby;
-        }
-
-        public Lobby StopGame(string lobbyId)
-        {
-            var lobby = Lobbies.Find(l => l.Id.Equals(lobbyId));
-            lobby.InGame = false;
-            lobby.LineSegments = new List<LineSegment>();
-
-            return lobby;
-        }
-
         public string GetLobbyName(string lobbyId)
         {
             var lobby = Lobbies.Find(l => l.Id.Equals(lobbyId));
