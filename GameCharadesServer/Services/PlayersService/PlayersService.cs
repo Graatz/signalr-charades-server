@@ -20,12 +20,13 @@ namespace GameCharadesServer.Services
             return Players.Find(p => p.ConnectionId.Equals(playerConnectionId));
         }
 
-        public Player CreatePlayer(string playerName, string connectionId)
+        public Player CreatePlayer(string playerName, string avatar, string connectionId)
         {
             var player = new Player()
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = playerName,
+                Avatar = avatar,
                 ConnectionId = connectionId
             };
 

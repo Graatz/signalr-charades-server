@@ -10,7 +10,7 @@ namespace GameCharadesServer.Services
     public interface IPlayersService
     {
         Player GetPlayerByConnectionId(string playerConnectionId);
-        Player CreatePlayer(string playerName, string connectionId);
+        Player CreatePlayer(string playerName, string avatar, string connectionId);
         bool RemovePlayer(string connectionId);
     }
 }

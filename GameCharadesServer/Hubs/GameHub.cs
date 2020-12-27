@@ -51,9 +51,9 @@ namespace GameCharadesServer.Hubs
         }
 
         #region Players
-        public async Task CreatePlayer(string playerName)
+        public async Task CreatePlayer(string playerName, string avatar)
         {
-            var player = playersService.CreatePlayer(playerName, Context.ConnectionId);
+            var player = playersService.CreatePlayer(playerName, avatar, Context.ConnectionId);
             await Clients.Caller.SendAsync("PlayerCreated", player);
         }
         #endregion
