@@ -9,13 +9,9 @@ namespace GameCharadesServer.Models
     {
         public string ClientUniqueId { get; set; }
 
-        public int CanvasWidth { get; set; }
+        public float X { get; set; }
 
-        public int CanvasHeight { get; set; }
-
-        public int X { get; set; }
-
-        public int Y { get; set; }
+        public float Y { get; set; }
 
         public bool IsFirstPointInSegment { get; set; }
 
